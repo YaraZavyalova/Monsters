@@ -94,7 +94,7 @@ spike_group = pygame.sprite.Group()
 
 
 def generate_level(level):
-    new_player, x, y, new_coin, new_monster = None, None, None, None, None
+    new_player, x, y, new_coin = None, None, None, None
     for y in range(len(level)):
         for x in range(len(level[y])):
             if level[y][x] == '#':
@@ -104,18 +104,18 @@ def generate_level(level):
                 new_player = Player(x, y)
             elif level[y][x] == '$':
                 Tile('empty', x, y)
-                new_coin = Coin(x, y)
+                Coin(x, y)
             elif level[y][x] == '&':
                 Tile('empty', x, y)
-                new_monster = Monster(x, y)
+                Monster(x, y)
             elif level[y][x] == '*':
                 Tile('empty', x, y)
-                new_monster = Exit(x, y)
+                Exit(x, y)
             elif level[y][x] == '^':
                 Tile('empty', x, y)
                 Spike(x, y)
     # вернем игрока, а также размер поля в клетках
-    return new_player, x, y, new_monster
+    return new_player, x, y
 
 
 tile_images = {
@@ -311,7 +311,7 @@ class Camera:
 
 def main():
     start_screen()
-    player, level_x, level_y, monster = generate_level(load_level('map.txt'))
+    player, level_x, level_y = generate_level(load_level('map.txt'))
     step = 10
     camera = Camera()
     running = True
