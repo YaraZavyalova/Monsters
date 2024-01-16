@@ -15,6 +15,9 @@ rows = 1
 screen_rect = (0, 0, WIDTH, HEIGHT)
 camera_move = True
 coin_num = 0
+map_num = 1
+death = False
+game_win = False
 
 
 def terminate():
@@ -24,16 +27,19 @@ def terminate():
 
 def start_screen():
     intro_text = ["ЗАСТАВКА", "",
-                  "Правила игры",
-                  "Если в правилах несколько строк,",
-                  "приходится выводить их построчно"]
+                  "Цель игры:",
+                  "Собирите все монеты, ",
+                  "преодолеть препятствия и добраться до финиша живым."
+                  "Персонажем можно управлять с помощью стрелочек(или WASD).",
+                  "Чтобы начать уровень заново нажмите 'r'.",
+                  "Удачи!"]
 
     fon = pygame.transform.scale(load_image('fon.png'), (WIDTH, HEIGHT))
     screen.blit(fon, (0, 0))
     font = pygame.font.Font(None, 30)
     text_coord = 50
     for line in intro_text:
-        string_rendered = font.render(line, 1, pygame.Color('black'))
+        string_rendered = font.render(line, 1, pygame.Color('white'))
         intro_rect = string_rendered.get_rect()
         text_coord += 10
         intro_rect.top = text_coord
@@ -53,46 +59,53 @@ def start_screen():
 
 
 def victory_screen():
-    intro_text = ["Вы Выграли!", "",
-                  "Нажмите на экран чтобы продолжить на",
-                  "следуйший уровень."]
+    global map_num
+    global game_win
+    if map_num < 3:
+        intro_text = ["Вы Выграли!", "",
+                      "Нажмите на экран чтобы продолжить на",
+                      "следующий уровень."]
 
-    fon = pygame.transform.scale(load_image('fon.png'), (WIDTH, HEIGHT))
-    screen.blit(fon, (0, 0))
-    font = pygame.font.Font(None, 30)
-    text_coord = 50
-    for line in intro_text:
-        string_rendered = font.render(line, 1, pygame.Color('white'))
-        intro_rect = string_rendered.get_rect()
-        text_coord += 10
-        intro_rect.top = text_coord
-        intro_rect.x = 10
-        text_coord += intro_rect.height
-        screen.blit(string_rendered, intro_rect)
-    while True:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                terminate()
-            elif event.type == pygame.KEYDOWN or \
-                    event.type == pygame.MOUSEBUTTONDOWN:
-
-                return
-        pygame.display.flip()
-        clock.tick(FPS)
+        fon = pygame.transform.scale(load_image('fon.png'), (WIDTH, HEIGHT))
+        screen.blit(fon, (0, 0))
+        font = pygame.font.Font(None, 30)
+        text_coord = 50
+        game_win = True
+        for line in intro_text:
+            string_rendered = font.render(line, 1, pygame.Color('white'))
+            intro_rect = string_rendered.get_rect()
+            text_coord += 10
+            intro_rect.top = text_coord
+            intro_rect.x = 10
+            text_coord += intro_rect.height
+            screen.blit(string_rendered, intro_rect)
+        while True:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    terminate()
+                elif event.type == pygame.KEYDOWN or \
+                        event.type == pygame.MOUSEBUTTONDOWN:
+                    return
+            pygame.display.flip()
+            clock.tick(FPS)
 
 
 def death_screen():
     global camera_move
-    intro_text = [" Вы проиграли", "",
-                  "Правила игры",
-                  "Собирите все монеты,",
-                  "приходится выводить их построчно"]
+    global death
+    intro_text = [" Вы проиграли!", "",
+                  "Цель игры:",
+                  "Собирите все монеты, ",
+                  "преодолеть препятствия и добраться до финиша живым."
+                  "Персонажем можно управлять с помощью стрелочек(или WASD)."
+                  "Чтобы начать уровень заново нажмите 'r'."]
 
     fon = pygame.transform.scale(load_image('fon.png'), (WIDTH, HEIGHT))
     screen.blit(fon, (0, 0))
     font = pygame.font.Font(None, 100)
     text_coord = 250
     camera_move = False
+    death = True
     for line in intro_text:
         string_rendered = font.render(line, 1, pygame.Color('red'))
         intro_rect = string_rendered.get_rect()
@@ -247,6 +260,46 @@ def create_particles(position):
         Particle(position, random.choice(numbers), random.choice(numbers))
 
 
+class MoneyRain(pygame.sprite.Sprite):
+    # сгенерируем частицы разного размера
+    fire = [load_image("Coin.png")]
+    for scale in (10, 20):
+        fire.append(pygame.transform.scale(fire[0], (scale, scale)))
+
+    def __init__(self, pos, dx, dy):
+        super().__init__(all_sprites)
+        self.image = random.choice(self.fire)
+        self.rect = self.image.get_rect()
+
+        # у каждой частицы своя скорость - это вектор
+        self.velocity = [dx, dy]
+        # и свои координаты
+        self.rect.x, self.rect.y = pos
+
+        # гравитация будет одинаковой
+        self.gravity = gravity
+
+    def update(self, *args):
+        # применяем гравитационный эффект:
+        # движение с ускорением под действием гравитации
+        self.velocity[1] += self.gravity
+        # перемещаем частицу
+        self.rect.x += self.velocity[0]
+        self.rect.y += self.velocity[1]
+        # убиваем, если частица ушла за экран
+        if not self.rect.colliderect(screen_rect):
+            self.kill()
+
+
+def create_particles_money(position):
+    # количество создаваемых частиц
+    particle_count = 20
+    # возможные скорости
+    numbers = range(-5, 6)
+    for _ in range(particle_count):
+        MoneyRain(position, random.choice(numbers), random.choice(numbers))
+
+
 MYEVENTTYPE = pygame.USEREVENT + 1
 pygame.time.set_timer(MYEVENTTYPE, 100)
 
@@ -266,6 +319,8 @@ class Exit(pygame.sprite.Sprite):
             self.exit_open = True
         if pygame.sprite.collide_mask(self, sprite) and self.exit_open:
             victory_screen()
+            if map_num == 3:
+                create_particles_money((sprite.rect.x, sprite.rect.y))
 
 
 class Monster(pygame.sprite.Sprite):
@@ -287,7 +342,7 @@ class Monster(pygame.sprite.Sprite):
                 self.frame = 1
 
     def collide_with(self, sprite):
-        if self.rect.colliderect(sprite.rect):
+        if pygame.sprite.collide_mask(self, sprite):
             create_particles((sprite.rect.x, sprite.rect.y))
             sprite.killed()
 
@@ -400,10 +455,14 @@ class Camera:
 
 
 def main():
+    global map_num
     global camera_move
+    global death
+    global game_win
+    global coin_num
+    player, level_x, level_y, monster, exit_door = generate_level(load_level(f'levels/level_{map_num}.txt'))
     camera_move = True
     start_screen()
-    player, level_x, level_y, monster, exit_door = generate_level(load_level('map.txt'))
     step = 15
     jump_height = 12
     y_gravity = 1
@@ -417,16 +476,18 @@ def main():
             player.rect.y += 5
             all_sprites.update(event)
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_UP:
+                if event.key == pygame.K_UP or event.key == pygame.K_w:
                     player.jump = True
-                if event.key == pygame.K_RIGHT:
+                if event.key == pygame.K_RIGHT or event.key == pygame.K_d:
                     player.move_right = True
-                if event.key == pygame.K_LEFT:
+                if event.key == pygame.K_LEFT or event.key == pygame.K_a:
                     player.move_left = True
+                if event.key == pygame.K_r:
+                    death = True
             if event.type == pygame.KEYUP:
-                if event.key == pygame.K_RIGHT:
+                if event.key == pygame.K_RIGHT or event.key == pygame.K_d:
                     player.move_right = False
-                if event.key == pygame.K_LEFT:
+                if event.key == pygame.K_LEFT or event.key == pygame.K_a:
                     player.move_left = False
             if player.jump:
                 player.rect.y -= y_vel
@@ -453,6 +514,19 @@ def main():
             spike.collide_with(player)
         for monster in monster_group:
             monster.collide_with(player)
+        if death or game_win:
+            for elem in all_sprites:
+                elem.kill()
+            coin_num = 0
+            if death:
+                death = False
+                player, level_x, level_y, monster, exit_door = generate_level(load_level(f'levels/level_{map_num}.txt'))
+            if game_win:
+                game_win = False
+                if map_num < 3:
+                    map_num += 1
+                    player, level_x, level_y, monster, exit_door = generate_level(
+                        load_level(f'levels/level_{map_num}.txt'))
         exit_door.open(player)
         coin_group.draw(screen)
         tiles_group.draw(screen)
