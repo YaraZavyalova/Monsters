@@ -13,6 +13,8 @@ gravity = 0.25
 columns = 4
 rows = 1
 screen_rect = (0, 0, WIDTH, HEIGHT)
+camera_move = True
+coin_num = 0
 
 
 def terminate():
@@ -47,6 +49,67 @@ def start_screen():
                     event.type == pygame.MOUSEBUTTONDOWN:
                 return  # начинаем игру
         pygame.display.flip()
+        clock.tick(FPS)
+
+
+def victory_screen():
+    intro_text = ["Вы Выграли!", "",
+                  "Нажмите на экран чтобы продолжить на",
+                  "следуйший уровень."]
+
+    fon = pygame.transform.scale(load_image('fon.png'), (WIDTH, HEIGHT))
+    screen.blit(fon, (0, 0))
+    font = pygame.font.Font(None, 30)
+    text_coord = 50
+    for line in intro_text:
+        string_rendered = font.render(line, 1, pygame.Color('white'))
+        intro_rect = string_rendered.get_rect()
+        text_coord += 10
+        intro_rect.top = text_coord
+        intro_rect.x = 10
+        text_coord += intro_rect.height
+        screen.blit(string_rendered, intro_rect)
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+            elif event.type == pygame.KEYDOWN or \
+                    event.type == pygame.MOUSEBUTTONDOWN:
+
+                return
+        pygame.display.flip()
+        clock.tick(FPS)
+
+
+def death_screen():
+    global camera_move
+    intro_text = [" Вы проиграли", "",
+                  "Правила игры",
+                  "Собирите все монеты,",
+                  "приходится выводить их построчно"]
+
+    fon = pygame.transform.scale(load_image('fon.png'), (WIDTH, HEIGHT))
+    screen.blit(fon, (0, 0))
+    font = pygame.font.Font(None, 100)
+    text_coord = 250
+    camera_move = False
+    for line in intro_text:
+        string_rendered = font.render(line, 1, pygame.Color('red'))
+        intro_rect = string_rendered.get_rect()
+        text_coord += 10
+        intro_rect.top = text_coord
+        intro_rect.x = 10
+        text_coord += intro_rect.height
+        screen.blit(string_rendered, intro_rect)
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+            elif event.type == pygame.KEYDOWN or \
+                    event.type == pygame.MOUSEBUTTONDOWN:
+                return
+        main()
         clock.tick(FPS)
 
 
@@ -94,7 +157,8 @@ spike_group = pygame.sprite.Group()
 
 
 def generate_level(level):
-    new_player, x, y, new_coin = None, None, None, None
+    global coin_num
+    new_player, x, y, new_monster, exit_door = None, None, None, None, None
     for y in range(len(level)):
         for x in range(len(level[y])):
             if level[y][x] == '#':
@@ -103,19 +167,20 @@ def generate_level(level):
                 Tile('empty', x, y)
                 new_player = Player(x, y)
             elif level[y][x] == '$':
+                coin_num += 1
                 Tile('empty', x, y)
                 Coin(x, y)
             elif level[y][x] == '&':
                 Tile('empty', x, y)
-                Monster(x, y)
+                new_monster = Monster(x, y)
             elif level[y][x] == '*':
                 Tile('empty', x, y)
-                Exit(x, y)
+                exit_door = Exit(x, y)
             elif level[y][x] == '^':
                 Tile('empty', x, y)
                 Spike(x, y)
     # вернем игрока, а также размер поля в клетках
-    return new_player, x, y
+    return new_player, x, y, new_monster, exit_door
 
 
 tile_images = {
@@ -138,9 +203,11 @@ class Tile(pygame.sprite.Sprite):
         self.rect = self.image.get_rect().move(
             tile_width * pos_x, tile_height * pos_y)
         self.tile_type = tile_type
+        if tile_type == 'wall':
+            self.mask = pygame.mask.from_surface(self.image)
 
 
-class Blood(pygame.sprite.Sprite):
+class Particle(pygame.sprite.Sprite):
     # сгенерируем частицы разного размера
     fire = [load_image("Blood.png")]
     for scale in (5, 10, 20):
@@ -151,12 +218,12 @@ class Blood(pygame.sprite.Sprite):
         self.image = random.choice(self.fire)
         self.rect = self.image.get_rect()
 
-        # скорость частицы
+        # у каждой частицы своя скорость - это вектор
         self.velocity = [dx, dy]
-        # и координаты
+        # и свои координаты
         self.rect.x, self.rect.y = pos
 
-        # гравитация
+        # гравитация будет одинаковой
         self.gravity = gravity
 
     def update(self, *args):
@@ -177,7 +244,7 @@ def create_particles(position):
     # возможные скорости
     numbers = range(-5, 6)
     for _ in range(particle_count):
-        Blood(position, random.choice(numbers), random.choice(numbers))
+        Particle(position, random.choice(numbers), random.choice(numbers))
 
 
 MYEVENTTYPE = pygame.USEREVENT + 1
@@ -188,12 +255,17 @@ class Exit(pygame.sprite.Sprite):
     def __init__(self, pos_x, pos_y):
         super().__init__(exit_group, all_sprites)
         self.image = exit_image[0]
+        self.exit_open = False
         self.rect = self.image.get_rect().move(
             tile_width * pos_x, tile_height * pos_y)
 
-    def collect(self, sprite):
-        if self.rect.colliderect(sprite.rect):
-            self.image = tile_images['empty']
+    def open(self, sprite):
+        global coin_num
+        if coin_num == 0:
+            self.image = exit_image[1]
+            self.exit_open = True
+        if pygame.sprite.collide_mask(self, sprite) and self.exit_open:
+            victory_screen()
 
 
 class Monster(pygame.sprite.Sprite):
@@ -228,7 +300,7 @@ class Spike(pygame.sprite.Sprite):
             tile_width * pos_x + 15, tile_height * pos_y + 5)
 
     def collide_with(self, sprite):
-        if self.rect.colliderect(sprite.rect):
+        if pygame.sprite.collide_mask(self, sprite):
             create_particles((sprite.rect.x, sprite.rect.y))
             sprite.killed()
 
@@ -241,8 +313,10 @@ class Coin(pygame.sprite.Sprite):
             tile_width * pos_x + 15, tile_height * pos_y + 5)
 
     def collect(self, sprite):
+        global coin_num
         if self.rect.colliderect(sprite.rect):
             self.image = tile_images['empty']
+            coin_num -= 1
             self.kill()
 
 
@@ -253,6 +327,8 @@ class Player(pygame.sprite.Sprite):
 
     def __init__(self, pos_x, pos_y):
         super().__init__(player_group, all_sprites)
+        self.x_start = pos_x
+        self.y_start = pos_y
         self.frames = []
         self.animations = []
         self.cut_sheet(player_walk_sheet[0], columns, rows)
@@ -263,6 +339,10 @@ class Player(pygame.sprite.Sprite):
             tile_width * pos_x + 15, tile_height * pos_y + 5)
         self.mask = pygame.mask.from_surface(self.image)
         self.frame = 0
+        self.gravity = gravity
+        self.velocity = [self.rect.x, self.rect.y]
+        self.dx = 0
+        self.dy = 0
 
     def cut_sheet(self, sheet, columns, rows):
         self.rect = pygame.Rect(0, 0, sheet.get_width() // columns, sheet.get_height() // rows)
@@ -273,15 +353,17 @@ class Player(pygame.sprite.Sprite):
         self.animations.append(self.frames)
         self.frames = []
 
+    def move(self, dx, dy):
+        self.rect.x += self.dx
+        self.rect.y += self.dy
+
     def update(self, *args):
-        # столкновение
         for elem in tiles_group:
             if pygame.sprite.collide_mask(self, elem):
                 if self.rect.y > 0:
                     self.rect.bottom = elem.rect.top
                 elif self.rect.y < 0:
                     self.rect.top = elem.rect.bottom
-        # Анимация спрайтов
         if args[0].type == MYEVENTTYPE:
             if self.move_right:
                 self.cur_frame = (self.cur_frame + 1) % len(self.animations[0])
@@ -291,30 +373,41 @@ class Player(pygame.sprite.Sprite):
                 self.image = self.animations[1][self.cur_frame]
 
     def killed(self):
+        self.rect.move(self.x_start, self.y_start)
         self.kill()
+        death_screen()
+        self.rect.y = self.y_start
+        self.rect.x = self.x_start
 
 
 class Camera:
-    # начальный сдвиг камеры
+    # зададим начальный сдвиг камеры
     def __init__(self):
         self.dx = 0
         self.dy = 0
 
     # сдвинуть объект obj на смещение камеры
     def apply(self, obj):
-        obj.rect.x += self.dx
-        obj.rect.y += self.dy
+        if camera_move:
+            obj.rect.x += self.dx
+            obj.rect.y += self.dy
 
     # позиционировать камеру на объекте target
     def update(self, target):
-        self.dx = -(target.rect.x + target.rect.w // 2 - WIDTH // 2)
-        self.dy = -(target.rect.y + target.rect.h // 2 - HEIGHT // 2)
+        if camera_move:
+            self.dx = -(target.rect.x + target.rect.w // 2 - WIDTH // 2)
+            self.dy = -(target.rect.y + target.rect.h // 2 - HEIGHT // 2)
 
 
 def main():
+    global camera_move
+    camera_move = True
     start_screen()
-    player, level_x, level_y = generate_level(load_level('map.txt'))
+    player, level_x, level_y, monster, exit_door = generate_level(load_level('map.txt'))
     step = 15
+    jump_height = 12
+    y_gravity = 1
+    y_vel = jump_height
     camera = Camera()
     running = True
     while running:
@@ -323,28 +416,30 @@ def main():
                 running = False
             player.rect.y += 5
             all_sprites.update(event)
-            # нажатие на клавиши
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_UP:
-                    player.rect.y -= 45
                     player.jump = True
                 if event.key == pygame.K_RIGHT:
                     player.move_right = True
                 if event.key == pygame.K_LEFT:
                     player.move_left = True
-            # что происходит когда отпускаешь клавиши
             if event.type == pygame.KEYUP:
-                if event.key == pygame.K_UP:
-                    player.jump = False
                 if event.key == pygame.K_RIGHT:
                     player.move_right = False
                 if event.key == pygame.K_LEFT:
                     player.move_left = False
-            # движение
+            if player.jump:
+                player.rect.y -= y_vel
+                y_vel -= y_gravity
+                if y_vel < - jump_height:
+                    player.jump = False
+                    y_vel = jump_height
+                player.rect.y -= y_vel
             if player.move_right:
                 player.rect.x += step
             if player.move_left:
                 player.rect.x -= step
+            player.rect.move(0, 1)
         fon = pygame.transform.scale(load_image('fon.png'), (WIDTH, HEIGHT))
         screen.blit(fon, (0, 0))
         # изменяем ракурс камеры
@@ -358,6 +453,7 @@ def main():
             spike.collide_with(player)
         for monster in monster_group:
             monster.collide_with(player)
+        exit_door.open(player)
         coin_group.draw(screen)
         tiles_group.draw(screen)
         all_sprites.draw(screen)
