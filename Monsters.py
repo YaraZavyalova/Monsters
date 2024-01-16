@@ -151,12 +151,12 @@ class Blood(pygame.sprite.Sprite):
         self.image = random.choice(self.fire)
         self.rect = self.image.get_rect()
 
-        # у каждой частицы своя скорость - это вектор
+        # скорость частицы
         self.velocity = [dx, dy]
-        # и свои координаты
+        # и координаты
         self.rect.x, self.rect.y = pos
 
-        # гравитация будет одинаковой
+        # гравитация
         self.gravity = gravity
 
     def update(self, *args):
@@ -274,12 +274,14 @@ class Player(pygame.sprite.Sprite):
         self.frames = []
 
     def update(self, *args):
+        # столкновение
         for elem in tiles_group:
             if pygame.sprite.collide_mask(self, elem):
                 if self.rect.y > 0:
                     self.rect.bottom = elem.rect.top
                 elif self.rect.y < 0:
                     self.rect.top = elem.rect.bottom
+        # Анимация спрайтов
         if args[0].type == MYEVENTTYPE:
             if self.move_right:
                 self.cur_frame = (self.cur_frame + 1) % len(self.animations[0])
@@ -293,7 +295,7 @@ class Player(pygame.sprite.Sprite):
 
 
 class Camera:
-    # зададим начальный сдвиг камеры
+    # начальный сдвиг камеры
     def __init__(self):
         self.dx = 0
         self.dy = 0
@@ -312,7 +314,7 @@ class Camera:
 def main():
     start_screen()
     player, level_x, level_y = generate_level(load_level('map.txt'))
-    step = 10
+    step = 15
     camera = Camera()
     running = True
     while running:
@@ -321,6 +323,7 @@ def main():
                 running = False
             player.rect.y += 5
             all_sprites.update(event)
+            # нажатие на клавиши
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_UP:
                     player.rect.y -= 45
@@ -329,6 +332,7 @@ def main():
                     player.move_right = True
                 if event.key == pygame.K_LEFT:
                     player.move_left = True
+            # что происходит когда отпускаешь клавиши
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_UP:
                     player.jump = False
@@ -336,6 +340,7 @@ def main():
                     player.move_right = False
                 if event.key == pygame.K_LEFT:
                     player.move_left = False
+            # движение
             if player.move_right:
                 player.rect.x += step
             if player.move_left:
