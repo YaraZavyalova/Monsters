@@ -2,6 +2,7 @@ import os
 import sys
 import random
 
+import sqlite3
 import pygame
 
 pygame.init()
@@ -28,7 +29,7 @@ def terminate():
 def start_screen():
     intro_text = ["ЗАСТАВКА", "",
                   "Цель игры:",
-                  "Собрать все монеты, ",
+                  "Собирите все монеты, ",
                   "преодолеть препятствия и добраться до финиша живым."
                   "Персонажем можно управлять с помощью стрелочек(или WASD).",
                   "Чтобы начать уровень заново нажмите 'r'.",
@@ -62,8 +63,8 @@ def victory_screen():
     global map_num
     global game_win
     if map_num < 3:
-        intro_text = ["Вы выграли!", "",
-                      "Кликните по экрану, чтобы перейти на",
+        intro_text = ["Вы Выграли!", "",
+                      "Нажмите на экран чтобы продолжить на",
                       "следующий уровень."]
 
         fon = pygame.transform.scale(load_image('fon.png'), (WIDTH, HEIGHT))
@@ -95,7 +96,7 @@ def death_screen():
     global death
     intro_text = [" Вы проиграли!", "",
                   "Цель игры:",
-                  "Собрать все монеты, ",
+                  "Собирите все монеты, ",
                   "преодолеть препятствия и добраться до финиша живым."
                   "Персонажем можно управлять с помощью стрелочек(или WASD)."
                   "Чтобы начать уровень заново нажмите 'r'."]
@@ -124,6 +125,102 @@ def death_screen():
                 return
         main()
         clock.tick(FPS)
+
+
+def savefile_screen():
+    global map_num
+    global WIDTH
+    if map_num < 3:
+        intro_text = ["Вы хотите сохранить свой прогресс?", "",
+                      "Нажмите S если хотите сохранить",
+                      "Нажмите O если хотите открыть уже сохранёный прогресс"]
+
+        fon = pygame.transform.scale(load_image('fon.png'), (WIDTH, HEIGHT))
+        screen.blit(fon, (0, 0))
+        font = pygame.font.Font(None, 30)
+        text_coord = 50
+        for line in intro_text:
+            string_rendered = font.render(line, 1, pygame.Color('white'))
+            intro_rect = string_rendered.get_rect()
+            text_coord += 10
+            intro_rect.top = text_coord
+            intro_rect.x = 10
+            text_coord += intro_rect.height
+            screen.blit(string_rendered, intro_rect)
+        while True:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    terminate()
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_s:
+                        return 'S'
+                    if event.key == pygame.K_o:
+                        return 'O'
+            pygame.display.flip()
+            clock.tick(FPS)
+
+
+def save_over_file_screen():
+    global map_num
+    global WIDTH
+    if map_num < 3:
+        intro_text = ["Вы хотите сохранить свой прогресс?", "",
+                      "Нажмите S если хотите сохранить",
+                      "Нажмите O если хотите открыть уже сохранёный прогресс"]
+
+        fon = pygame.transform.scale(load_image('fon.png'), (WIDTH, HEIGHT))
+        screen.blit(fon, (0, 0))
+        font = pygame.font.Font(None, 30)
+        text_coord = 50
+        for line in intro_text:
+            string_rendered = font.render(line, 1, pygame.Color('white'))
+            intro_rect = string_rendered.get_rect()
+            text_coord += 10
+            intro_rect.top = text_coord
+            intro_rect.x = 10
+            text_coord += intro_rect.height
+            screen.blit(string_rendered, intro_rect)
+        while True:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    terminate()
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_y:
+                        return 'Y'
+                    if event.key == pygame.K_n:
+                        return 'N'
+                return
+            pygame.display.flip()
+            clock.tick(FPS)
+
+
+def no_save_screen():
+    global map_num
+    global WIDTH
+    if map_num < 3:
+        intro_text = ["Нет такого файла", "", ]
+
+        fon = pygame.transform.scale(load_image('fon.png'), (WIDTH, HEIGHT))
+        screen.blit(fon, (0, 0))
+        font = pygame.font.Font(None, 30)
+        text_coord = 50
+        for line in intro_text:
+            string_rendered = font.render(line, 1, pygame.Color('white'))
+            intro_rect = string_rendered.get_rect()
+            text_coord += 10
+            intro_rect.top = text_coord
+            intro_rect.x = 10
+            text_coord += intro_rect.height
+            screen.blit(string_rendered, intro_rect)
+        while True:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    terminate()
+                elif event.type == pygame.KEYDOWN or \
+                        event.type == pygame.MOUSEBUTTONDOWN:
+                    return  # начинаем игру
+            pygame.display.flip()
+            clock.tick(FPS)
 
 
 def load_image(name, colorkey=None):
@@ -484,6 +581,37 @@ def main():
                     player.move_left = True
                 if event.key == pygame.K_r:
                     death = True
+                if event.key == pygame.K_0 or event.key == pygame.K_1 or event.key == pygame.K_2:
+                    answer = savefile_screen()
+                    con = sqlite3.connect('data/saves.sqlite')
+                    cur = con.cursor()
+                    result = cur.execute("""SELECT savefiles FROM Saves""").fetchall()
+                    saves = []
+                    keys = {pygame.K_0: 0, pygame.K_1: 1, pygame.K_2: 2, pygame.K_3: 3, pygame.K_4: 4,
+                            pygame.K_5: 5, pygame.K_6: 6, pygame.K_7: 7, pygame.K_8: 8, pygame.K_9: 9}
+                    for name in result:
+                        saves.append(name[0])
+                    if answer == 'S':
+                        if keys[event.key] in saves:
+                            yes_no = save_over_file_screen()
+                            if yes_no == 'N':
+                                break
+                            if yes_no == 'Y':
+                                cur.execute(f"""UPDATE Saves
+                                       WHERE savefiles = '{keys[event.key]}' SET levels = '{map_num}'""")
+                        else:
+                            cur.execute(
+                                f"""INSERT INTO Saves(savefiles,levels) VALUES('{keys[event.key]}','{map_num}')""")
+                    elif answer == 'O':
+                        if keys[event.key] in saves:
+                            map_num = cur.execute(f"""SELECT levels FROM Saves
+                                WHERE savefiles = '{keys[event.key]}'""").fetchall()[0][0]
+                            death = True
+
+                        else:
+                            no_save_screen()
+                    con.commit()
+                    con.close()
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_RIGHT or event.key == pygame.K_d:
                     player.move_right = False
