@@ -130,97 +130,93 @@ def death_screen():
 def savefile_screen():
     global map_num
     global WIDTH
-    if map_num < 3:
-        intro_text = ["Вы хотите сохранить свой прогресс?", "",
-                      "Нажмите S если хотите сохранить",
-                      "Нажмите O если хотите открыть уже сохранёный прогресс"]
+    intro_text = ["Вы хотите сохранить свой прогресс?", "",
+                  "Нажмите S если хотите сохранить",
+                  "Нажмите O если хотите открыть уже сохранёный прогресс"]
 
-        fon = pygame.transform.scale(load_image('fon.png'), (WIDTH, HEIGHT))
-        screen.blit(fon, (0, 0))
-        font = pygame.font.Font(None, 30)
-        text_coord = 50
-        for line in intro_text:
-            string_rendered = font.render(line, 1, pygame.Color('white'))
-            intro_rect = string_rendered.get_rect()
-            text_coord += 10
-            intro_rect.top = text_coord
-            intro_rect.x = 10
-            text_coord += intro_rect.height
-            screen.blit(string_rendered, intro_rect)
-        while True:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    terminate()
-                elif event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_s:
-                        return 'S'
-                    if event.key == pygame.K_o:
-                        return 'O'
-            pygame.display.flip()
-            clock.tick(FPS)
+    fon = pygame.transform.scale(load_image('fon.png'), (WIDTH, HEIGHT))
+    screen.blit(fon, (0, 0))
+    font = pygame.font.Font(None, 30)
+    text_coord = 50
+    for line in intro_text:
+        string_rendered = font.render(line, 1, pygame.Color('white'))
+        intro_rect = string_rendered.get_rect()
+        text_coord += 10
+        intro_rect.top = text_coord
+        intro_rect.x = 10
+        text_coord += intro_rect.height
+        screen.blit(string_rendered, intro_rect)
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_s:
+                    return 'S'
+                if event.key == pygame.K_o:
+                    return 'O'
+        pygame.display.flip()
+        clock.tick(FPS)
 
 
 def save_over_file_screen():
     global map_num
     global WIDTH
-    if map_num < 3:
-        intro_text = ["Вы хотите сохранить свой прогресс?", "",
-                      "Нажмите S если хотите сохранить",
-                      "Нажмите O если хотите открыть уже сохранёный прогресс"]
+    intro_text = ["Вы хотите сохранить свой прогресс?", "",
+                  "Нажмите S если хотите сохранить",
+                  "Нажмите O если хотите открыть уже сохранёный прогресс"]
 
-        fon = pygame.transform.scale(load_image('fon.png'), (WIDTH, HEIGHT))
-        screen.blit(fon, (0, 0))
-        font = pygame.font.Font(None, 30)
-        text_coord = 50
-        for line in intro_text:
-            string_rendered = font.render(line, 1, pygame.Color('white'))
-            intro_rect = string_rendered.get_rect()
-            text_coord += 10
-            intro_rect.top = text_coord
-            intro_rect.x = 10
-            text_coord += intro_rect.height
-            screen.blit(string_rendered, intro_rect)
-        while True:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    terminate()
-                elif event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_y:
-                        return 'Y'
-                    if event.key == pygame.K_n:
-                        return 'N'
-                return
-            pygame.display.flip()
-            clock.tick(FPS)
+    fon = pygame.transform.scale(load_image('fon.png'), (WIDTH, HEIGHT))
+    screen.blit(fon, (0, 0))
+    font = pygame.font.Font(None, 30)
+    text_coord = 50
+    for line in intro_text:
+        string_rendered = font.render(line, 1, pygame.Color('white'))
+        intro_rect = string_rendered.get_rect()
+        text_coord += 10
+        intro_rect.top = text_coord
+        intro_rect.x = 10
+        text_coord += intro_rect.height
+        screen.blit(string_rendered, intro_rect)
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_y:
+                    return 'Y'
+                if event.key == pygame.K_n:
+                    return 'N'
+        pygame.display.flip()
+        clock.tick(FPS)
 
 
 def no_save_screen():
     global map_num
     global WIDTH
-    if map_num < 3:
-        intro_text = ["Нет такого файла", "", ]
+    intro_text = ["Нет такого файла", "", ]
 
-        fon = pygame.transform.scale(load_image('fon.png'), (WIDTH, HEIGHT))
-        screen.blit(fon, (0, 0))
-        font = pygame.font.Font(None, 30)
-        text_coord = 50
-        for line in intro_text:
-            string_rendered = font.render(line, 1, pygame.Color('white'))
-            intro_rect = string_rendered.get_rect()
-            text_coord += 10
-            intro_rect.top = text_coord
-            intro_rect.x = 10
-            text_coord += intro_rect.height
-            screen.blit(string_rendered, intro_rect)
-        while True:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    terminate()
-                elif event.type == pygame.KEYDOWN or \
-                        event.type == pygame.MOUSEBUTTONDOWN:
-                    return  # начинаем игру
-            pygame.display.flip()
-            clock.tick(FPS)
+    fon = pygame.transform.scale(load_image('fon.png'), (WIDTH, HEIGHT))
+    screen.blit(fon, (0, 0))
+    font = pygame.font.Font(None, 30)
+    text_coord = 50
+    for line in intro_text:
+        string_rendered = font.render(line, 1, pygame.Color('white'))
+        intro_rect = string_rendered.get_rect()
+        text_coord += 10
+        intro_rect.top = text_coord
+        intro_rect.x = 10
+        text_coord += intro_rect.height
+        screen.blit(string_rendered, intro_rect)
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+            elif event.type == pygame.KEYDOWN or \
+                    event.type == pygame.MOUSEBUTTONDOWN:
+                return
+        pygame.display.flip()
+        clock.tick(FPS)
 
 
 def load_image(name, colorkey=None):
@@ -598,7 +594,7 @@ def main():
                                 break
                             if yes_no == 'Y':
                                 cur.execute(f"""UPDATE Saves
-                                       WHERE savefiles = '{keys[event.key]}' SET levels = '{map_num}'""")
+                                SET levels = '{map_num}' WHERE savefiles = '{keys[event.key]}'""")
                         else:
                             cur.execute(
                                 f"""INSERT INTO Saves(savefiles,levels) VALUES('{keys[event.key]}','{map_num}')""")
