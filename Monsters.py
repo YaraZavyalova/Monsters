@@ -65,7 +65,7 @@ def victory_screen():
     if map_num < 3:
         intro_text = ["Вы Выграли!", "",
                       "Нажмите на экран чтобы продолжить на",
-                      "следующий уровень."]
+                      "следующий уровень.", "Можно сохранить свой прогресс в игре при помощи клавиш цифр"]
 
         fon = pygame.transform.scale(load_image('fon.png'), (WIDTH, HEIGHT))
         screen.blit(fon, (0, 0))
@@ -162,9 +162,9 @@ def savefile_screen():
 def save_over_file_screen():
     global map_num
     global WIDTH
-    intro_text = ["Вы хотите сохранить свой прогресс?", "",
-                  "Нажмите S если хотите сохранить",
-                  "Нажмите O если хотите открыть уже сохранёный прогресс"]
+    intro_text = ["Вы хотите сохранить свой прогресс? Тут уже есть сохранёный прогресс", "",
+                  "Нажмите Y если хотите сохранить",
+                  "Нажмите N если нет"]
 
     fon = pygame.transform.scale(load_image('fon.png'), (WIDTH, HEIGHT))
     screen.blit(fon, (0, 0))
